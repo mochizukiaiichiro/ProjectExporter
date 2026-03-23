@@ -6,14 +6,13 @@ function Initialize-Variable {
     Set-Variable -Name EXCLUDE_DIRS -Value @("node_modules", ".git", ".vscode") -Option ReadOnly -Scope Script  # 対象外のディレクトリ
     Set-Variable -Name EXCLUDE_FILE -Value @("FolderExporter.ps1", "out.md") -Option ReadOnly -Scope Script     # 対象外のファイル
     Set-Variable -Name EXCLUDE_EXTS -Value @("*.log") -Option ReadOnly -Scope Script                            # 対象外の拡張子
+    Set-Variable -Name ROOT_PATH_LENGTH -Value (Resolve-Path $Script:TARGET_PATH).Path.Length -Option ReadOnly -Scope Script    # ルートディレクトリの絶対パスの文字数
 
     # 変数
     # ファイルとディレクトリのList（構造の書き込み用）
     $Script:filesList = [System.Collections.Generic.List[object]]::new()
     # ファイルのみのList（ファイルの書き込み用）
     $Script:filesOnlyList = [System.Collections.Generic.List[object]]::new()
-    # ルートディレクトリの絶対パスの文字数
-    $Script:rootPathLength = (Resolve-Path $Script:TARGET_PATH).Path.Length
 }
 
 # OutPutファイルの削除
@@ -59,7 +58,7 @@ function Write-ProjectStructure {
 
     foreach ($item in $Script:filesList | Sort-Object FullName) {
         # 相対パス
-        $relative = $item.FullName.Substring($Script:rootPathLength).TrimStart('\')
+        $relative = $item.FullName.Substring($Script:ROOT_PATH_LENGTH).TrimStart('\')
 
         # パスを分割して階層を計算
         $parts = $relative -split '\\'
@@ -91,7 +90,7 @@ function Write-ProjectFiles {
 
     foreach ($list in $Script:filesOnlyList | Sort-Object FullName) {
         # 相対パス
-        $relativePath = $list.FullName.Substring($Script:rootPathLength).TrimStart('\')
+        $relativePath = $list.FullName.Substring($Script:ROOT_PATH_LENGTH).TrimStart('\')
         # コードブロックの言語
         $lang = $list.Extension.TrimStart('.').ToLower()
 
