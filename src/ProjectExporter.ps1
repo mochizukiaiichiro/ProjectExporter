@@ -18,15 +18,11 @@ function Initialize-OutPutFile {
 # ファイル一覧の取得
 function Get-ProjectFiles {
     # ファイル一覧の取得（拡張子の除外）
-    $lists = Get-ChildItem -Path $Script:TARGET_PATH -Recurse -Exclude $Script:EXCLUDE_EXTS
+    $lists = (Get-ChildItem -Path $Script:TARGET_PATH -Recurse -Exclude $Script:EXCLUDE_EXTS).Where({ $_.Name -notin $Script:EXCLUDE_FILE })
 
     foreach ($list in $lists) {
         # ディレクトリの除外
         if ($Script:EXCLUDE_DIRS | Where-Object { $list.FullName.Contains($_) }) {
-            continue
-        }
-        # ファイルの除外
-        if ($Script:EXCLUDE_FILE -contains $list.Name) {
             continue
         }
         # ファイルとディレクトリのList（構造の書き込み用）
