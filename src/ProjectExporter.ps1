@@ -1,18 +1,11 @@
-# 変数の初期化
-function Initialize-Variable {
-    # 定数
-    Set-Variable -Name TARGET_PATH  -Value "../test/dir" -Option ReadOnly -Scope Script                                   # 対象ディレクトリ
+# 定数定義
+function Initialize-Constant {
+    Set-Variable -Name TARGET_PATH  -Value "../test/dir" -Option ReadOnly -Scope Script                         # 対象ディレクトリ
     Set-Variable -Name OUTPUT_FILE  -Value "out.md" -Option ReadOnly -Scope Script                              # 出力ファイル
     Set-Variable -Name EXCLUDE_DIRS -Value @("node_modules", ".git", ".vscode") -Option ReadOnly -Scope Script  # 対象外のディレクトリ
     Set-Variable -Name EXCLUDE_FILE -Value @("FolderExporter.ps1", "out.md") -Option ReadOnly -Scope Script     # 対象外のファイル
     Set-Variable -Name EXCLUDE_EXTS -Value @("*.log") -Option ReadOnly -Scope Script                            # 対象外の拡張子
     Set-Variable -Name ROOT_PATH_LENGTH -Value (Resolve-Path $Script:TARGET_PATH).Path.Length -Option ReadOnly -Scope Script    # ルートディレクトリの絶対パスの文字数
-
-    # 変数
-    # ファイルとディレクトリのList（構造の書き込み用）
-    $Script:filesList = [System.Collections.Generic.List[object]]::new()
-    # ファイルのみのList（ファイルの書き込み用）
-    $Script:filesOnlyList = [System.Collections.Generic.List[object]]::new()
 }
 
 # OutPutファイルの削除
@@ -109,11 +102,15 @@ function Main {
     begin {
         Write-Host Start
         # 初期化
-        Initialize-Variable     # 変数の初期化
+        Initialize-Constant     # 定数定義
         Initialize-OutPutFile   # OutPutファイルの削除
     }
 
     process {
+        # 変数
+        $Script:filesList = [System.Collections.Generic.List[object]]::new()        # ファイルとディレクトリのList（構造の書き込み用）
+        $Script:filesOnlyList = [System.Collections.Generic.List[object]]::new()    # ファイルのみのList（ファイルの書き込み用）
+
         # ファイル一覧の取得
         Get-ProjectFiles
         # 構造の書き込み
