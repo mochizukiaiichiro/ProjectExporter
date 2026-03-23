@@ -1,7 +1,7 @@
 # 初期化関数
 function Initialize-ProjectExporter {
     # 定数
-    Set-Variable -Name TARGET_PATH  -Value "." -Option ReadOnly -Scope Script                                   # 対象ディレクトリ
+    Set-Variable -Name TARGET_PATH  -Value "../test/dir" -Option ReadOnly -Scope Script                                   # 対象ディレクトリ
     Set-Variable -Name OUTPUT_FILE  -Value "out.md" -Option ReadOnly -Scope Script                              # 出力ファイル
     Set-Variable -Name EXCLUDE_DIRS -Value @("node_modules", ".git", ".vscode") -Option ReadOnly -Scope Script  # 対象外のディレクトリ
     Set-Variable -Name EXCLUDE_FILE -Value @("FolderExporter.ps1", "out.md") -Option ReadOnly -Scope Script     # 対象外のファイル
