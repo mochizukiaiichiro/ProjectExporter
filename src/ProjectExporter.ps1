@@ -1,5 +1,5 @@
-# 初期化関数
-function Initialize-ProjectExporter {
+# 変数の初期化
+function Initialize-Variable {
     # 定数
     Set-Variable -Name TARGET_PATH  -Value "../test/dir" -Option ReadOnly -Scope Script                                   # 対象ディレクトリ
     Set-Variable -Name OUTPUT_FILE  -Value "out.md" -Option ReadOnly -Scope Script                              # 出力ファイル
@@ -14,8 +14,10 @@ function Initialize-ProjectExporter {
     $Script:filesOnlyList = [System.Collections.Generic.List[object]]::new()
     # ルートディレクトリの絶対パスの文字数
     $Script:rootPathLength = (Resolve-Path $Script:TARGET_PATH).Path.Length
+}
 
-    # 出力ファイルの削除
+# OutPutファイルの削除
+function Initialize-OutPutFile {
     if (Test-Path $Script:OUTPUT_FILE) {
         Remove-Item $Script:OUTPUT_FILE
     }
@@ -108,7 +110,8 @@ function Main {
     begin {
         Write-Host Start
         # 初期化
-        Initialize-ProjectExporter
+        Initialize-Variable     # 変数の初期化
+        Initialize-OutPutFile   # OutPutファイルの削除
     }
 
     process {
