@@ -16,25 +16,13 @@ function Initialize-OutPutFile {
 }
 
 # ファイル一覧の取得
-
 function Get-ProjectFiles($path, $dirs, $file , $exts) {
     # 正規表現を生成
     $regex = '\\(' + ($dirs -replace '\.', '\.' -join '|') + ')(?=\\|$)'
-
     # ファイル一覧の取得
-    $lists = (Get-ChildItem -Path $path -Recurse -Exclude $exts).
+    return (Get-ChildItem -Path $path -Recurse -Exclude $exts).
     Where({ $_.Name -notin $file }).
     Where({ $_.FullName -notmatch $regex })
-
-    foreach ($list in $lists) {
-        # ファイルとディレクトリのList（構造の書き込み用）
-        $Script:filesList.Add($list)
-
-        # ファイルのみのList（ファイルの書き込み用）
-        if (-not $list.PSIsContainer) {
-            $Script:filesOnlyList.Add($list)
-        }
-    }
 }
 
 # 構造の書き込み
@@ -105,12 +93,11 @@ function Main {
     }
 
     process {
-        # 変数
-        $Script:filesList = [System.Collections.Generic.List[object]]::new()        # ファイルとディレクトリのList（構造の書き込み用）
-        $Script:filesOnlyList = [System.Collections.Generic.List[object]]::new()    # ファイルのみのList（ファイルの書き込み用）
+        # ファイルとディレクトリのList（構造の書き込み用）
+        $Script:filesList = Get-ProjectFiles $Script:TARGET_PATH $Script:EXCLUDE_DIRS $Script:EXCLUDE_FILE $Script:EXCLUDE_EXTS
+        # ファイルのみのList（ファイルの書き込み用）
+        $Script:filesOnlyList = $filesList.Where({ -not $_.PSIsContainer })
 
-        # ファイル一覧の取得
-        Get-ProjectFiles $Script:TARGET_PATH $Script:EXCLUDE_DIRS $Script:EXCLUDE_FILE $Script:EXCLUDE_EXTS
         # 構造の書き込み
         Write-ProjectStructure
         # フィルの書き込み
