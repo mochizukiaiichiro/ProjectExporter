@@ -22,7 +22,8 @@ function Get-ProjectFiles($path, $dirs, $file , $exts) {
     # ファイル一覧の取得
     return (Get-ChildItem -Path $path -Recurse -Exclude $exts).
     Where({ $_.Name -notin $file }).
-    Where({ $_.FullName -notmatch $regex })
+    Where({ $_.FullName -notmatch $regex }) |
+    Sort-Object FullName
 }
 
 # 構造の書き込み
@@ -35,7 +36,7 @@ function Write-ProjectStructure($path, $lists, $length) {
     $root = Split-Path $path -Leaf
     $lines += "$root/"
 
-    foreach ($item in $lists | Sort-Object FullName) {
+    foreach ($item in $lists) {
         # 相対パス
         $relative = $item.FullName.Substring($length).TrimStart('\')
 
@@ -67,7 +68,7 @@ function Write-ProjectFiles {
     $lines = @()
     $lines += "# PROJECT FILES`n"
 
-    foreach ($list in $Script:filesOnlyList | Sort-Object FullName) {
+    foreach ($list in $Script:filesOnlyList) {
         # 相対パス
         $relativePath = $list.FullName.Substring($Script:ROOT_PATH_LENGTH).TrimStart('\')
         # コードブロックの言語
