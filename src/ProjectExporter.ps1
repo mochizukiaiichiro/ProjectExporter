@@ -26,7 +26,7 @@ function Get-ProjectFiles($path, $dirs, $file , $exts) {
     Sort-Object FullName
 }
 
-# 構造の書き込み
+# プロジェクト構造のMarkdown生成
 function Write-ProjectStructure($path, $lists, $length) {
     $lines = @()
     $lines += "# PROJECT STRUCTURE`n"
@@ -59,11 +59,10 @@ function Write-ProjectStructure($path, $lists, $length) {
     $lines += '```'
     $lines += ""
 
-    #出力
-    $lines | Out-File -FilePath $Script:OUTPUT_FILE -Append
+    return $lines
 }
 
-# フィルの書き込み
+# プロジェクトファイルのMarkdown生成
 function Write-ProjectFiles($lists, $length) {
     $lines = @()
     $lines += "# PROJECT FILES`n"
@@ -80,8 +79,8 @@ function Write-ProjectFiles($lists, $length) {
         $lines += '```'                         # コードブロック終了
         $lines += ""
     }
-    #出力
-    $lines | Out-File -FilePath $Script:OUTPUT_FILE -Append
+
+    return $lines
 }
 # Main関数
 function Main {
@@ -97,12 +96,15 @@ function Main {
         # ファイルとディレクトリのList（構造の書き込み用）
         $Script:filesList = Get-ProjectFiles $Script:TARGET_PATH $Script:EXCLUDE_DIRS $Script:EXCLUDE_FILE $Script:EXCLUDE_EXTS
         # ファイルのみのList（ファイルの書き込み用）
-        $Script:filesOnlyList = $filesList.Where({ -not $_.PSIsContainer })
+        $Script:filesOnlyList = $Script:filesList.Where({ -not $_.PSIsContainer })
 
-        # 構造の書き込み
-        Write-ProjectStructure $Script:TARGET_PATH $filesList $Script:ROOT_PATH_LENGTH
-        # フィルの書き込み
-        Write-ProjectFiles $filesOnlyList $Script:ROOT_PATH_LENGTH
+        # プロジェクト構造のMarkdown生成
+        $structureMarkDown = Write-ProjectStructure $Script:TARGET_PATH $filesList $Script:ROOT_PATH_LENGTH
+        # プロジェクトファイルのMarkdown生成
+        $filesMarkDown = Write-ProjectFiles $filesOnlyList $Script:ROOT_PATH_LENGTH
+
+        # ファイルの書き込み
+        $structureMarkDown + $filesMarkDown | Out-File -FilePath $Script:OUTPUT_FILE -Append
     }
 
     end {
