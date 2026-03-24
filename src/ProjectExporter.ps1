@@ -94,9 +94,9 @@ function Main {
 
     process {
         # ファイルとディレクトリのList（構造の書き込み用）
-        $Script:filesList = Get-ProjectFiles $Script:TARGET_PATH $Script:EXCLUDE_DIRS $Script:EXCLUDE_FILE $Script:EXCLUDE_EXTS
+        $filesList = Get-ProjectFiles $Script:TARGET_PATH $Script:EXCLUDE_DIRS $Script:EXCLUDE_FILE $Script:EXCLUDE_EXTS
         # ファイルのみのList（ファイルの書き込み用）
-        $Script:filesOnlyList = $Script:filesList.Where({ -not $_.PSIsContainer })
+        $filesOnlyList = $filesList.Where({ -not $_.PSIsContainer })
 
         # プロジェクト構造のMarkdown生成
         $structureMarkDown = Write-ProjectStructure $Script:TARGET_PATH $filesList $Script:ROOT_PATH_LENGTH
