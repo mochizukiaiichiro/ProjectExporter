@@ -17,13 +17,13 @@ function Initialize-OutPutFile {
 
 # ファイル一覧の取得
 
-function Get-ProjectFiles {
+function Get-ProjectFiles($path, $dirs, $file , $exts) {
     # 正規表現を生成
-    $regex = '\\(' + ($EXCLUDE_DIRS -replace '\.', '\.' -join '|') + ')(?=\\|$)'
+    $regex = '\\(' + ($dirs -replace '\.', '\.' -join '|') + ')(?=\\|$)'
 
     # ファイル一覧の取得
-    $lists = (Get-ChildItem -Path $Script:TARGET_PATH -Recurse -Exclude $Script:EXCLUDE_EXTS).
-    Where({ $_.Name -notin $Script:EXCLUDE_FILE }).
+    $lists = (Get-ChildItem -Path $path -Recurse -Exclude $exts).
+    Where({ $_.Name -notin $file }).
     Where({ $_.FullName -notmatch $regex })
 
     foreach ($list in $lists) {
@@ -110,7 +110,7 @@ function Main {
         $Script:filesOnlyList = [System.Collections.Generic.List[object]]::new()    # ファイルのみのList（ファイルの書き込み用）
 
         # ファイル一覧の取得
-        Get-ProjectFiles
+        Get-ProjectFiles $Script:TARGET_PATH $Script:EXCLUDE_DIRS $Script:EXCLUDE_FILE $Script:EXCLUDE_EXTS
         # 構造の書き込み
         Write-ProjectStructure
         # フィルの書き込み
