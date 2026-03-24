@@ -36,9 +36,9 @@ function Write-ProjectStructure($path, $lists, $length) {
     $root = Split-Path $path -Leaf
     $lines += "$root/"
 
-    foreach ($item in $lists) {
+    foreach ($list in $lists) {
         # 相対パス
-        $relative = $item.FullName.Substring($length).TrimStart('\')
+        $relative = $list.FullName.Substring($length).TrimStart('\')
 
         # パスを分割して階層を計算
         $parts = $relative -split '\\'
@@ -48,7 +48,7 @@ function Write-ProjectStructure($path, $lists, $length) {
         $indent = "  " * $depth
 
         # ディレクトリかファイルかで出力を変える
-        if ($item.PSIsContainer) {
+        if ($list.PSIsContainer) {
             $lines += "$indent$($parts[-1])/"
         }
         else {
