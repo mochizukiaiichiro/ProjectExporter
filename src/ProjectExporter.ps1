@@ -16,15 +16,17 @@ function Initialize-OutPutFile {
 }
 
 # ファイル一覧の取得
+
 function Get-ProjectFiles {
-    # ファイル一覧の取得（拡張子の除外）
-    $lists = (Get-ChildItem -Path $Script:TARGET_PATH -Recurse -Exclude $Script:EXCLUDE_EXTS).Where({ $_.Name -notin $Script:EXCLUDE_FILE })
+    # 正規表現を生成
+    $regex = '\\(' + ($EXCLUDE_DIRS -replace '\.', '\.' -join '|') + ')(?=\\|$)'
+
+    # ファイル一覧の取得
+    $lists = (Get-ChildItem -Path $Script:TARGET_PATH -Recurse -Exclude $Script:EXCLUDE_EXTS).
+    Where({ $_.Name -notin $Script:EXCLUDE_FILE }).
+    Where({ $_.FullName -notmatch $regex })
 
     foreach ($list in $lists) {
-        # ディレクトリの除外
-        if ($Script:EXCLUDE_DIRS | Where-Object { $list.FullName.Contains($_) }) {
-            continue
-        }
         # ファイルとディレクトリのList（構造の書き込み用）
         $Script:filesList.Add($list)
 
