@@ -64,13 +64,13 @@ function Write-ProjectStructure($path, $lists, $length) {
 }
 
 # フィルの書き込み
-function Write-ProjectFiles {
+function Write-ProjectFiles($lists, $length) {
     $lines = @()
     $lines += "# PROJECT FILES`n"
 
-    foreach ($list in $Script:filesOnlyList) {
+    foreach ($list in $lists) {
         # 相対パス
-        $relativePath = $list.FullName.Substring($Script:ROOT_PATH_LENGTH).TrimStart('\')
+        $relativePath = $list.FullName.Substring($length).TrimStart('\')
         # コードブロックの言語
         $lang = $list.Extension.TrimStart('.').ToLower()
 
@@ -102,7 +102,7 @@ function Main {
         # 構造の書き込み
         Write-ProjectStructure $Script:TARGET_PATH $filesList $Script:ROOT_PATH_LENGTH
         # フィルの書き込み
-        Write-ProjectFiles
+        Write-ProjectFiles $filesOnlyList $Script:ROOT_PATH_LENGTH
     }
 
     end {
