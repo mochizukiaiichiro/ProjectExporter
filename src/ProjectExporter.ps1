@@ -26,18 +26,18 @@ function Get-ProjectFiles($path, $dirs, $file , $exts) {
 }
 
 # 構造の書き込み
-function Write-ProjectStructure {
+function Write-ProjectStructure($path, $lists, $length) {
     $lines = @()
     $lines += "# PROJECT STRUCTURE`n"
     $lines += '```text'
 
     # ルートディレクトリ
-    $root = Split-Path $Script:TARGET_PATH -Leaf
+    $root = Split-Path $path -Leaf
     $lines += "$root/"
 
-    foreach ($item in $Script:filesList | Sort-Object FullName) {
+    foreach ($item in $lists | Sort-Object FullName) {
         # 相対パス
-        $relative = $item.FullName.Substring($Script:ROOT_PATH_LENGTH).TrimStart('\')
+        $relative = $item.FullName.Substring($length).TrimStart('\')
 
         # パスを分割して階層を計算
         $parts = $relative -split '\\'
@@ -99,7 +99,7 @@ function Main {
         $Script:filesOnlyList = $filesList.Where({ -not $_.PSIsContainer })
 
         # 構造の書き込み
-        Write-ProjectStructure
+        Write-ProjectStructure $Script:TARGET_PATH $filesList $Script:ROOT_PATH_LENGTH
         # フィルの書き込み
         Write-ProjectFiles
     }
