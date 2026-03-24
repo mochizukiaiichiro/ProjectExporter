@@ -75,7 +75,7 @@ function Write-ProjectFiles($lists, $length) {
 
         $lines += "## FILE: $relativePath`n"    # ファイル開始
         $lines += '```' + $lang                 # コードブロック開始
-        $lines += Get-Content $list.FullName    # ファイル内容
+        $lines += Get-Content -LiteralPath $list.FullName -Encoding UTF8 # ファイル内容
         $lines += '```'                         # コードブロック終了
         $lines += ""
     }
@@ -104,7 +104,7 @@ function Main {
         $filesMarkDown = Write-ProjectFiles $filesOnlyList $Script:ROOT_PATH_LENGTH
 
         # ファイルの書き込み
-        $structureMarkDown + $filesMarkDown | Out-File -FilePath $Script:OUTPUT_FILE -Append
+        $structureMarkDown + $filesMarkDown | Out-File -FilePath $Script:OUTPUT_FILE -Append -Encoding UTF8
     }
 
     end {
