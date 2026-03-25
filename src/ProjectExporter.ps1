@@ -27,14 +27,14 @@ function Get-ProjectFiles($path, $dirs, $file , $exts) {
 }
 
 # プロジェクト構造のMarkdown生成
-function Write-ProjectStructure($path, $lists, $length) {
-    $lines = @()
-    $lines += "# PROJECT STRUCTURE`n"
-    $lines += '```text'
+function Write-ProjectStructure($path, $lists, $length, $writer) {
+
+    $writer.WriteLine("# PROJECT STRUCTURE`n")
+    $writer.WriteLine('```text')
 
     # ルートディレクトリ
     $root = Split-Path $path -Leaf
-    $lines += "$root/"
+    $writer.WriteLine("$root/")
 
     foreach ($list in $lists) {
         # 相対パス
@@ -49,23 +49,21 @@ function Write-ProjectStructure($path, $lists, $length) {
 
         # ディレクトリかファイルかで出力を変える
         if ($list.PSIsContainer) {
-            $lines += "$indent$($parts[-1])/"
+            $writer.WriteLine("$indent$($parts[-1])/")
         }
         else {
-            $lines += "$indent$($parts[-1])"
+            $writer.WriteLine("$indent$($parts[-1])")
         }
     }
 
-    $lines += '```'
-    $lines += ""
-
-    return $lines
+    $writer.WriteLine('```')
+    $writer.WriteLine("")
 }
 
-# プロジェクトファイルのMarkdown生成
-function Write-ProjectFiles($lists, $length) {
-    $lines = @()
-    $lines += "# PROJECT FILES`n"
+# ファイルのMarkdown生成
+function Write-ProjectFiles($lists, $length, $writer) {
+
+    $writer.WriteLine("# PROJECT FILES`n")
 
     foreach ($list in $lists) {
         # 相対パス
@@ -73,23 +71,30 @@ function Write-ProjectFiles($lists, $length) {
         # コードブロックの言語
         $lang = $list.Extension.TrimStart('.').ToLower()
 
-        $lines += "## FILE: $relativePath`n"    # ファイル開始
-        $lines += '```' + $lang                 # コードブロック開始
-        $lines += Get-Content -LiteralPath $list.FullName -Encoding UTF8 # ファイル内容
-        $lines += '```'                         # コードブロック終了
-        $lines += ""
-    }
+        # ファイル開始
+        $writer.WriteLine("## FILE: $relativePath`n")
 
-    return $lines
+        # コードブロックの言語
+        $writer.WriteLine('```' + $lang)
+
+        # ファイル内容
+        $content = Get-Content -LiteralPath $list.FullName -Raw -Encoding UTF8
+        $writer.WriteLine($content)
+
+        # コードブロック終了
+        $writer.WriteLine('```')
+    }
 }
+
 # Main関数
 function Main {
-
     begin {
         Write-Host Start
         # 初期化
         Initialize-Constant     # 定数定義
         Initialize-OutPutFile   # OutPutファイルの削除
+        # StreamWriter
+        $writer = [System.IO.StreamWriter]::new($Script:OUTPUT_FILE, $false, [System.Text.Encoding]::UTF8)
     }
 
     process {
@@ -99,15 +104,13 @@ function Main {
         $filesOnlyList = $filesList.Where({ -not $_.PSIsContainer })
 
         # プロジェクト構造のMarkdown生成
-        $structureMarkDown = Write-ProjectStructure $Script:TARGET_PATH $filesList $Script:ROOT_PATH_LENGTH
-        # プロジェクトファイルのMarkdown生成
-        $filesMarkDown = Write-ProjectFiles $filesOnlyList $Script:ROOT_PATH_LENGTH
-
-        # ファイルの書き込み
-        $structureMarkDown + $filesMarkDown | Out-File -FilePath $Script:OUTPUT_FILE -Append -Encoding UTF8
+        Write-ProjectStructure $Script:TARGET_PATH $filesList $Script:ROOT_PATH_LENGTH $writer
+        # ファイルのMarkdown生成
+        Write-ProjectFiles $filesOnlyList $Script:ROOT_PATH_LENGTH $writer
     }
 
     end {
+        $writer.Close()
         Write-Host End
     }
 }
