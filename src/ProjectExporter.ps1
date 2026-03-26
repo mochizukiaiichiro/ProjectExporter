@@ -142,7 +142,7 @@ function Write-ProjectFiles($lists, $length, $writer) {
         $writer.WriteLine("## FILE: $relativePath`n")
         # メタ情報
         $writer.WriteLine("- path: $relativePath")
-        $writer.WriteLine("- ext: $lang")
+        $writer.WriteLine("- ext: $lang`n")
 
         # コードブロックの言語
         $writer.WriteLine('```' + $lang)
