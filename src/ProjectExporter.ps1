@@ -79,6 +79,12 @@ function Get-ProjectFiles {
 function Write-ProjectStructure($path, $lists, $length, $writer) {
 
     $writer.WriteLine("# PROJECT STRUCTURE`n")
+    $writer.WriteLine(@"
+    以下のルールで構造を示します：
+    - `/` で終わるものはディレクトリ
+    - `/` が付かないものはファイル（拡張子の有無は問いません）
+
+    "@)
     $writer.WriteLine('```text')
 
     # ルートディレクトリ
@@ -122,6 +128,9 @@ function Write-ProjectFiles($lists, $length, $writer) {
 
         # ファイル開始
         $writer.WriteLine("## FILE: $relativePath`n")
+        # メタ情報
+        $writer.WriteLine("- path: $relativePath")
+        $writer.WriteLine("- ext: $lang")
 
         # コードブロックの言語
         $writer.WriteLine('```' + $lang)
