@@ -103,7 +103,7 @@ function Write-ProjectStructure($path, $lists, $length, $writer) {
         $indent = "  " * $depth
 
         # ディレクトリかファイルかで出力を変える
-        if ($list.PSIsContainer) {
+        if ($list -is [System.IO.DirectoryInfo]) {
             $writer.WriteLine("$indent$($parts[-1])/")
         }
         else {
