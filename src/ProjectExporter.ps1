@@ -16,15 +16,64 @@ function Initialize-OutPutFile {
 }
 
 # ファイル一覧の取得
-function Get-ProjectFiles($path, $dirs, $file , $exts) {
-    # 正規表現を生成
-    $regex = '\\(' + ($dirs -replace '\.', '\.' -join '|') + ')(?=\\|$)'
-    # ファイル一覧の取得
-    return (Get-ChildItem -Path $path -Recurse -Exclude $exts).
-    Where({ $_.Name -notin $file }).
-    Where({ $_.FullName -notmatch $regex }) |
-    Sort-Object FullName
+function Get-ProjectFiles {
+    param(
+        [string]$RootPath,
+        [string[]]$ExcludeDirs,
+        [string[]]$ExcludeFiles,
+        [string[]]$ExcludeExts
+    )
+
+    $results = New-Object System.Collections.Generic.List[object]
+
+    function Scan([string]$path) {
+
+        # 現在のディレクトリ名
+        $dirName = [System.IO.Path]::GetFileName($path) 
+
+        # ディレクトリの除外
+        if ($ExcludeDirs -contains $dirName) {
+            return
+        }
+
+        # --- ファイル処理 ---
+        $files = [System.IO.Directory]::GetFiles($path)
+        foreach ($file in $files) {
+
+            $name = [System.IO.Path]::GetFileName($file)
+            $ext = [System.IO.Path]::GetExtension($file)
+
+            # 除外ファイル・除外拡張子
+            if ($ExcludeFiles -contains $name) { continue }
+            if ($ExcludeExts -contains $ext) { continue }
+
+            # FileInfo を追加
+            $results.Add([System.IO.FileInfo]::new($file))
+        }
+
+        # --- ディレクトリ処理 ---
+        $dirs = [System.IO.Directory]::GetDirectories($path)
+        foreach ($dir in $dirs) {
+
+            $name = [System.IO.Path]::GetFileName($dir)
+
+            # ディレクトリの除外
+            if ($ExcludeDirs -contains $name) { continue }
+
+            # DirectoryInfoを追加
+            $results.Add([System.IO.DirectoryInfo]::new($dir))
+
+            # 再帰
+            Scan $dir
+        }
+    }
+
+    # 走査開始
+    Scan $RootPath
+
+    return $results
 }
+
 
 # プロジェクト構造のMarkdown生成
 function Write-ProjectStructure($path, $lists, $length, $writer) {
@@ -101,7 +150,7 @@ function Main {
         # ファイルとディレクトリのList（構造の書き込み用）
         $filesList = Get-ProjectFiles $Script:TARGET_PATH $Script:EXCLUDE_DIRS $Script:EXCLUDE_FILE $Script:EXCLUDE_EXTS
         # ファイルのみのList（ファイルの書き込み用）
-        $filesOnlyList = $filesList.Where({ -not $_.PSIsContainer })
+        $filesOnlyList = $filesList.Where({ $_ -is [System.IO.FileInfo] })
 
         # プロジェクト構造のMarkdown生成
         Write-ProjectStructure $Script:TARGET_PATH $filesList $Script:ROOT_PATH_LENGTH $writer
