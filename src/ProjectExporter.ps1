@@ -6,6 +6,18 @@ function Initialize-Constant {
     Set-Variable -Name EXCLUDE_FILE -Value @("FolderExporter.ps1", "out.md") -Option ReadOnly -Scope Script     # 対象外のファイル
     Set-Variable -Name EXCLUDE_EXTS -Value @("*.log") -Option ReadOnly -Scope Script                            # 対象外の拡張子
     Set-Variable -Name ROOT_PATH_LENGTH -Value (Resolve-Path $Script:TARGET_PATH).Path.Length -Option ReadOnly -Scope Script    # ルートディレクトリの絶対パスの文字数
+    Set-Variable -Name LANGUAGE_MAP -Value @{
+    ".md"   = "markdown"
+    ".yml"  = "yaml"
+    ".yaml" = "yaml"
+    ".env"  = "text"
+    ".txt"  = "text"
+    ".gitignore"     = "text"
+    ".dockerignore"  = "text"
+    ".prettierrc"    = "json"
+    ".eslintrc"      = "json"
+    ".babelrc"       = "json"
+    } -Option ReadOnly -Scope Script    # 拡張子とコードブロックの割当て（AIが誤認するもののみ）
 }
 
 # OutPutファイルの削除
@@ -124,7 +136,7 @@ function Write-ProjectFiles($lists, $length, $writer) {
         # 相対パス
         $relativePath = $list.FullName.Substring($length).TrimStart('\')
         # コードブロックの言語
-        $lang = $list.Extension.TrimStart('.').ToLower()
+        $lang = Get-CodeLanguage $list
 
         # ファイル開始
         $writer.WriteLine("## FILE: $relativePath`n")
@@ -142,6 +154,24 @@ function Write-ProjectFiles($lists, $length, $writer) {
         # コードブロック終了
         $writer.WriteLine('```')
     }
+}
+
+# 拡張子からコードブロックを取得
+function Get-CodeLanguage($fileInfo) {
+    $ext = $fileInfo.Extension.ToLower()
+
+    # マッピングに存在する場合
+    if ($Script:LANGUAGE_MAP.ContainsKey($ext)) {
+        return $Script:LANGUAGE_MAP[$ext]
+    }
+
+    # 拡張子なし
+    if ([string]::IsNullOrWhiteSpace($ext)) {
+        return "text"
+    }
+
+    # 未知の拡張子 → 拡張子名をそのまま使う
+    return $ext.TrimStart('.')
 }
 
 # Main関数
