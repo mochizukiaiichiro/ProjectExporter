@@ -7,16 +7,16 @@ function Initialize-Constant {
     Set-Variable -Name EXCLUDE_EXTS -Value @(".log") -Option ReadOnly -Scope Script                            # 対象外の拡張子
     Set-Variable -Name ROOT_PATH_LENGTH -Value (Resolve-Path $Script:TARGET_PATH).Path.Length -Option ReadOnly -Scope Script    # ルートディレクトリの絶対パスの文字数
     Set-Variable -Name LANGUAGE_MAP -Value @{
-    ".md"   = "markdown"
-    ".yml"  = "yaml"
-    ".yaml" = "yaml"
-    ".env"  = "text"
-    ".txt"  = "text"
-    ".gitignore"     = "text"
-    ".dockerignore"  = "text"
-    ".prettierrc"    = "json"
-    ".eslintrc"      = "json"
-    ".babelrc"       = "json"
+        ".md"           = "markdown"
+        ".yml"          = "yaml"
+        ".yaml"         = "yaml"
+        ".env"          = "text"
+        ".txt"          = "text"
+        ".gitignore"    = "text"
+        ".dockerignore" = "text"
+        ".prettierrc"   = "json"
+        ".eslintrc"     = "json"
+        ".babelrc"      = "json"
     } -Option ReadOnly -Scope Script    # 拡張子とコードブロックの割当て（AIが誤認するもののみ）
 }
 
