@@ -1,6 +1,22 @@
+# コマンド引数
+[CmdletBinding()]
+param(
+    [ValidateScript({
+            # null、空文字の場合はMain関数でローカルパスに置き換える
+            if ([string]::IsNullOrWhiteSpace($_)) { return $true }
+            # 値がある場合はパスの存在チェック
+            Test-Path $_
+        })]
+    [string]$Path
+)
+
 # 定数定義
 function Initialize-Constant {
-    Set-Variable -Name TARGET_PATH  -Value "../test/dir" -Option ReadOnly -Scope Script                         # 対象ディレクトリ
+    param(
+        [string]$TargetPath
+    )
+
+    Set-Variable -Name TARGET_PATH  -Value $TargetPath -Option ReadOnly -Scope Script                         # 対象ディレクトリ
     Set-Variable -Name OUTPUT_FILE  -Value "out.md" -Option ReadOnly -Scope Script                              # 出力ファイル
     Set-Variable -Name EXCLUDE_DIRS -Value @("node_modules", ".git", ".vscode") -Option ReadOnly -Scope Script  # 対象外のディレクトリ
     Set-Variable -Name EXCLUDE_FILE -Value @("FolderExporter.ps1", "out.md") -Option ReadOnly -Scope Script     # 対象外のファイル
@@ -178,9 +194,15 @@ function Get-CodeLanguage($fileInfo) {
 function Main {
     begin {
         Write-Host Start
+
+        # Pathがnull、空文字の場合はローカルパスに置き換える
+        if ([string]::IsNullOrWhiteSpace($Path)) {
+            $Path = Get-Location
+        }
+
         # 初期化
-        Initialize-Constant     # 定数定義
-        Initialize-OutPutFile   # OutPutファイルの削除
+        Initialize-Constant -TargetPath $Path   # 定数定義
+        Initialize-OutPutFile                   # OutPutファイルの削除
         # StreamWriter
         $writer = [System.IO.StreamWriter]::new($Script:OUTPUT_FILE, $false, [System.Text.Encoding]::UTF8)
     }
