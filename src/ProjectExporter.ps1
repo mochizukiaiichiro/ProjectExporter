@@ -21,22 +21,24 @@ function Main {
         }
 
         # 初期化
-        Initialize-Constant -TargetPath $Path   # 定数定義
-        Initialize-OutPutFile                   # OutPutファイルの削除
+        # 定数定義
+        Initialize-Constant -TargetPath $Path
+        # OutPutファイルの削除
+        Initialize-OutPutFile -OutputFile $Script:OUTPUT_FILE
         # StreamWriter
         $writer = [System.IO.StreamWriter]::new($Script:OUTPUT_FILE, $false, [System.Text.Encoding]::UTF8)
     }
 
     process {
         # ファイルとディレクトリのList（構造の書き込み用）
-        $filesList = Get-ProjectFiles $Script:TARGET_PATH $Script:EXCLUDE_DIRS $Script:EXCLUDE_FILE $Script:EXCLUDE_EXTS
+        $filesList = Get-ProjectFiles -RootPath $Script:ROOT_PATH -ExcludeDirs $Script:EXCLUDE_DIRS -ExcludeFiles $Script:EXCLUDE_FILES -ExcludeExts $Script:EXCLUDE_EXTS
         # ファイルのみのList（ファイルの書き込み用）
         $filesOnlyList = $filesList.Where({ $_ -is [System.IO.FileInfo] })
 
         # プロジェクト構造のMarkdown生成
-        Write-ProjectStructure $Script:TARGET_PATH $filesList $Script:ROOT_PATH_LENGTH $writer
+        Write-ProjectStructure -RootPath $Script:ROOT_PATH -filesList $FilesList -RootPathLength $Script:ROOT_PATH_LENGTH -Writer $writer
         # ファイルのMarkdown生成
-        Write-ProjectFiles $filesOnlyList $Script:ROOT_PATH_LENGTH $writer
+        Write-ProjectFiles -FilesList $filesOnlyList -RootPathLength $Script:ROOT_PATH_LENGTH -Writer $writer
     }
 
     end {
@@ -51,12 +53,12 @@ function Initialize-Constant {
         [string]$TargetPath
     )
 
-    Set-Variable -Name TARGET_PATH  -Value $TargetPath -Option ReadOnly -Scope Script                           # 対象ディレクトリ
+    Set-Variable -Name ROOT_PATH  -Value $TargetPath -Option ReadOnly -Scope Script                           # 対象ディレクトリ
     Set-Variable -Name OUTPUT_FILE  -Value "out.md" -Option ReadOnly -Scope Script                              # 出力ファイル
     Set-Variable -Name EXCLUDE_DIRS -Value @("node_modules", ".git", ".vscode") -Option ReadOnly -Scope Script  # 対象外のディレクトリ
-    Set-Variable -Name EXCLUDE_FILE -Value @("ProjectExporter.ps1", "out.md") -Option ReadOnly -Scope Script    # 対象外のファイル
+    Set-Variable -Name EXCLUDE_FILES -Value @("ProjectExporter.ps1", "out.md") -Option ReadOnly -Scope Script    # 対象外のファイル
     Set-Variable -Name EXCLUDE_EXTS -Value @(".log") -Option ReadOnly -Scope Script                             # 対象外の拡張子
-    Set-Variable -Name ROOT_PATH_LENGTH -Value (Resolve-Path $Script:TARGET_PATH).Path.Length -Option ReadOnly -Scope Script    # ルートディレクトリの絶対パスの文字数
+    Set-Variable -Name ROOT_PATH_LENGTH -Value (Resolve-Path $Script:ROOT_PATH).Path.Length -Option ReadOnly -Scope Script    # ルートディレクトリの絶対パスの文字数
     Set-Variable -Name LANGUAGE_MAP -Value @{
         ".md"           = "markdown"
         ".yml"          = "yaml"
@@ -73,8 +75,12 @@ function Initialize-Constant {
 
 # OutPutファイルの削除
 function Initialize-OutPutFile {
-    if (Test-Path $Script:OUTPUT_FILE) {
-        Remove-Item $Script:OUTPUT_FILE
+    param(
+        [string]$OutputFile
+    )
+
+    if (Test-Path $OutputFile) {
+        Remove-Item $OutputFile
     }
 }
 
@@ -89,10 +95,11 @@ function Get-ProjectFiles {
 
     $results = New-Object System.Collections.Generic.List[object]
 
-    function Scan([string]$path) {
+    function Scan {
+        param([string]$Path)
 
         # 現在のディレクトリ名
-        $dirName = [System.IO.Path]::GetFileName($path) 
+        $dirName = [System.IO.Path]::GetFileName($Path) 
 
         # ディレクトリの除外
         if ($ExcludeDirs -contains $dirName) {
@@ -100,7 +107,7 @@ function Get-ProjectFiles {
         }
 
         # --- ファイル処理 ---
-        $files = [System.IO.Directory]::GetFiles($path)
+        $files = [System.IO.Directory]::GetFiles($Path)
         foreach ($file in $files) {
 
             $name = [System.IO.Path]::GetFileName($file)
@@ -115,7 +122,7 @@ function Get-ProjectFiles {
         }
 
         # --- ディレクトリ処理 ---
-        $dirs = [System.IO.Directory]::GetDirectories($path)
+        $dirs = [System.IO.Directory]::GetDirectories($Path)
         foreach ($dir in $dirs) {
 
             $name = [System.IO.Path]::GetFileName($dir)
@@ -139,24 +146,30 @@ function Get-ProjectFiles {
 
 
 # プロジェクト構造のMarkdown生成
-function Write-ProjectStructure($path, $lists, $length, $writer) {
+function Write-ProjectStructure {
+    param(
+        [string]$RootPath,
+        [System.Collections.IEnumerable]$FilesList,
+        [int]$RootPathLength,
+        [System.IO.StreamWriter]$Writer
+    )
 
-    $writer.WriteLine("# PROJECT STRUCTURE`n")
-    $writer.WriteLine(@"
+    $Writer.WriteLine("# PROJECT STRUCTURE`n")
+    $Writer.WriteLine(@"
 以下のルールで構造を示します：
 - `/` で終わるものはディレクトリ
 - `/` が付かないものはファイル（拡張子の有無は問いません）
 
 "@)
-    $writer.WriteLine('```text')
+    $Writer.WriteLine('```text')
 
     # ルートディレクトリ
-    $root = Split-Path $path -Leaf
-    $writer.WriteLine("$root/")
+    $root = Split-Path $RootPath -Leaf
+    $Writer.WriteLine("$root/")
 
-    foreach ($list in $lists) {
+    foreach ($list in $FilesList) {
         # 相対パス
-        $relative = $list.FullName.Substring($length).TrimStart('\')
+        $relative = $list.FullName.Substring($RootPathLength).TrimStart('\')
 
         # パスを分割して階層を計算
         $parts = $relative -split '\\'
@@ -167,49 +180,58 @@ function Write-ProjectStructure($path, $lists, $length, $writer) {
 
         # ディレクトリかファイルかで出力を変える
         if ($list -is [System.IO.DirectoryInfo]) {
-            $writer.WriteLine("$indent$($parts[-1])/")
+            $Writer.WriteLine("$indent$($parts[-1])/")
         }
         else {
-            $writer.WriteLine("$indent$($parts[-1])")
+            $Writer.WriteLine("$indent$($parts[-1])")
         }
     }
 
-    $writer.WriteLine('```')
-    $writer.WriteLine("")
+    $Writer.WriteLine('```')
+    $Writer.WriteLine("")
 }
 
 # ファイルのMarkdown生成
-function Write-ProjectFiles($lists, $length, $writer) {
+function Write-ProjectFiles {
+    param(
+        [System.IO.FileInfo[]]$FilesList,
+        [int]$RootPathLength,
+        [System.IO.StreamWriter]$Writer
+    )
 
-    $writer.WriteLine("# PROJECT FILES`n")
+    $Writer.WriteLine("# PROJECT FILES`n")
 
-    foreach ($list in $lists) {
+    foreach ($list in $FilesList) {
         # 相対パス
-        $relativePath = $list.FullName.Substring($length).TrimStart('\')
+        $relativePath = $list.FullName.Substring($RootPathLength).TrimStart('\')
         # コードブロックの言語
-        $lang = Get-CodeLanguage $list
+        $lang = Get-CodeLanguage -FileInfo $list
 
         # ファイル開始
-        $writer.WriteLine("## FILE: $relativePath`n")
+        $Writer.WriteLine("## FILE: $relativePath`n")
         # メタ情報
-        $writer.WriteLine("- path: $relativePath")
-        $writer.WriteLine("- ext: $lang`n")
+        $Writer.WriteLine("- path: $relativePath")
+        $Writer.WriteLine("- ext: $lang`n")
 
         # コードブロックの言語
-        $writer.WriteLine('```' + $lang)
+        $Writer.WriteLine('```' + $lang)
 
         # ファイル内容
         $content = Get-Content -LiteralPath $list.FullName -Raw -Encoding UTF8
-        $writer.WriteLine($content)
+        $Writer.WriteLine($content)
 
         # コードブロック終了
-        $writer.WriteLine('```')
+        $Writer.WriteLine('```')
     }
 }
 
 # 拡張子からコードブロックを取得
-function Get-CodeLanguage($fileInfo) {
-    $ext = $fileInfo.Extension.ToLower()
+function Get-CodeLanguage {
+    param(
+        [System.IO.FileSystemInfo]$FileInfo
+    )
+
+    $ext = $FileInfo.Extension.ToLower()
 
     # マッピングに存在する場合
     if ($Script:LANGUAGE_MAP.ContainsKey($ext)) {
