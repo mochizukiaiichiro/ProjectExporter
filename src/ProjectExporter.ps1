@@ -10,6 +10,41 @@ param(
     [string]$Path
 )
 
+# Main関数
+function Main {
+    begin {
+        Write-Host Start
+
+        # Pathがnull、空文字の場合はローカルパスに置き換える
+        if ([string]::IsNullOrWhiteSpace($Path)) {
+            $Path = Get-Location
+        }
+
+        # 初期化
+        Initialize-Constant -TargetPath $Path   # 定数定義
+        Initialize-OutPutFile                   # OutPutファイルの削除
+        # StreamWriter
+        $writer = [System.IO.StreamWriter]::new($Script:OUTPUT_FILE, $false, [System.Text.Encoding]::UTF8)
+    }
+
+    process {
+        # ファイルとディレクトリのList（構造の書き込み用）
+        $filesList = Get-ProjectFiles $Script:TARGET_PATH $Script:EXCLUDE_DIRS $Script:EXCLUDE_FILE $Script:EXCLUDE_EXTS
+        # ファイルのみのList（ファイルの書き込み用）
+        $filesOnlyList = $filesList.Where({ $_ -is [System.IO.FileInfo] })
+
+        # プロジェクト構造のMarkdown生成
+        Write-ProjectStructure $Script:TARGET_PATH $filesList $Script:ROOT_PATH_LENGTH $writer
+        # ファイルのMarkdown生成
+        Write-ProjectFiles $filesOnlyList $Script:ROOT_PATH_LENGTH $writer
+    }
+
+    end {
+        $writer.Close()
+        Write-Host End
+    }
+}
+
 # 定数定義
 function Initialize-Constant {
     param(
@@ -188,41 +223,6 @@ function Get-CodeLanguage($fileInfo) {
 
     # 未知の拡張子 → 拡張子名をそのまま使う
     return $ext.TrimStart('.')
-}
-
-# Main関数
-function Main {
-    begin {
-        Write-Host Start
-
-        # Pathがnull、空文字の場合はローカルパスに置き換える
-        if ([string]::IsNullOrWhiteSpace($Path)) {
-            $Path = Get-Location
-        }
-
-        # 初期化
-        Initialize-Constant -TargetPath $Path   # 定数定義
-        Initialize-OutPutFile                   # OutPutファイルの削除
-        # StreamWriter
-        $writer = [System.IO.StreamWriter]::new($Script:OUTPUT_FILE, $false, [System.Text.Encoding]::UTF8)
-    }
-
-    process {
-        # ファイルとディレクトリのList（構造の書き込み用）
-        $filesList = Get-ProjectFiles $Script:TARGET_PATH $Script:EXCLUDE_DIRS $Script:EXCLUDE_FILE $Script:EXCLUDE_EXTS
-        # ファイルのみのList（ファイルの書き込み用）
-        $filesOnlyList = $filesList.Where({ $_ -is [System.IO.FileInfo] })
-
-        # プロジェクト構造のMarkdown生成
-        Write-ProjectStructure $Script:TARGET_PATH $filesList $Script:ROOT_PATH_LENGTH $writer
-        # ファイルのMarkdown生成
-        Write-ProjectFiles $filesOnlyList $Script:ROOT_PATH_LENGTH $writer
-    }
-
-    end {
-        $writer.Close()
-        Write-Host End
-    }
 }
 
 # エントリーポイント
