@@ -51,11 +51,11 @@ function Initialize-Constant {
         [string]$TargetPath
     )
 
-    Set-Variable -Name TARGET_PATH  -Value $TargetPath -Option ReadOnly -Scope Script                         # 対象ディレクトリ
+    Set-Variable -Name TARGET_PATH  -Value $TargetPath -Option ReadOnly -Scope Script                           # 対象ディレクトリ
     Set-Variable -Name OUTPUT_FILE  -Value "out.md" -Option ReadOnly -Scope Script                              # 出力ファイル
     Set-Variable -Name EXCLUDE_DIRS -Value @("node_modules", ".git", ".vscode") -Option ReadOnly -Scope Script  # 対象外のディレクトリ
-    Set-Variable -Name EXCLUDE_FILE -Value @("FolderExporter.ps1", "out.md") -Option ReadOnly -Scope Script     # 対象外のファイル
-    Set-Variable -Name EXCLUDE_EXTS -Value @(".log") -Option ReadOnly -Scope Script                            # 対象外の拡張子
+    Set-Variable -Name EXCLUDE_FILE -Value @("ProjectExporter.ps1", "out.md") -Option ReadOnly -Scope Script    # 対象外のファイル
+    Set-Variable -Name EXCLUDE_EXTS -Value @(".log") -Option ReadOnly -Scope Script                             # 対象外の拡張子
     Set-Variable -Name ROOT_PATH_LENGTH -Value (Resolve-Path $Script:TARGET_PATH).Path.Length -Option ReadOnly -Scope Script    # ルートディレクトリの絶対パスの文字数
     Set-Variable -Name LANGUAGE_MAP -Value @{
         ".md"           = "markdown"
