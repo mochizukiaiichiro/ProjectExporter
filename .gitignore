@@ -2,4 +2,4 @@
 .git/
 
 # DIV
-out.md
+out*.md
